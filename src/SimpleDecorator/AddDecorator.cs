@@ -1,15 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SimpleDecorator.Abstractions;
 
-namespace SimpleDecorator;
+namespace Microsoft.Extensions.DependencyInjection;
 
-public static class ExtensionMethods
+public static partial class ExtensionMethods
 {
     public static IServiceCollection AddKeyedDecorator<TRequest, TResponse, TDecorator>(this IServiceCollection services, string key, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         where TDecorator : IDecorator<TRequest, TResponse>
