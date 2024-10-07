@@ -7,54 +7,94 @@ namespace SimpleDecorator.Tests;
 public class UnitTest1
 {
     [Fact]
-    public async Task Test1()
+    public async Task TwoStacked()
     {
         var sp = new ServiceCollection()
-            .AddKeyedHandler<Request, Response, RequestHandler>("1")
+            .SetKeyedHandler<Request, Response, RequestHandler>("1")
             .AddKeyedDecorator<Request, Response, KeyDecorator>("1")
             .AddKeyedDecorator<Request, Response, WhatDecorator>("1")
             .BuildServiceProvider();
 
-        var handler = sp.GetRequiredKeyedService<IRequestHandler<Request, Response>>("1");
+        var handler = sp.GetRequiredKeyedService<IHandler<Request, Response>>("1");
         var ret = await handler.HandleAsync(new Request(), CancellationToken.None);
 
+        Assert.Equal("What", ret.Message);
+    }
+
+    [Fact]
+    public async Task TwoStackedReversed()
+    {
+        var sp = new ServiceCollection()
+            .SetKeyedHandler<Request, Response, RequestHandler>("1")
+            .AddKeyedDecorator<Request, Response, WhatDecorator>("1")
+            .AddKeyedDecorator<Request, Response, KeyDecorator>("1")
+            .BuildServiceProvider();
+        var handler = sp.GetRequiredKeyedService<IHandler<Request, Response>>("1");
+        var ret = await handler.HandleAsync(new Request(), CancellationToken.None);
         Assert.Equal("1", ret.Message);
     }
-}
 
-
-file class RequestHandler : IRequestHandler<Request, Response>
-{
-    public Task<Response> HandleAsync(Request request, CancellationToken cancellationToken)
+    [Fact]
+    public async Task TwoStackedDifferentKeys()
     {
-        return Task.FromResult(new Response
-        {
-            Message = "Hello World!"
-        });
+        var sp = new ServiceCollection()
+            .SetKeyedHandler<Request, Response, RequestHandler>("1")
+            .SetKeyedHandler<Request, Response, RequestHandler>("2")
+            .AddKeyedDecorator<Request, Response, KeyDecorator>("1")
+            .AddKeyedDecorator<Request, Response, WhatDecorator>("2")
+            .BuildServiceProvider();
+        var handler1 = sp.GetRequiredKeyedService<IHandler<Request, Response>>("1");
+        var handler2 = sp.GetRequiredKeyedService<IHandler<Request, Response>>("2");
+        var ret1 = await handler1.HandleAsync(new Request(), CancellationToken.None);
+        var ret2 = await handler2.HandleAsync(new Request(), CancellationToken.None);
+        Assert.Equal("1", ret1.Message);
+        Assert.Equal("What", ret2.Message);
     }
+
+    [Fact]
+    public async Task NonStacked()
+    {
+        var sp = new ServiceCollection()
+            .SetKeyedHandler<Request, Response, RequestHandler>("1")
+            .BuildServiceProvider();
+        var handler = sp.GetRequiredKeyedService<IHandler<Request, Response>>("1");
+        var ret = await handler.HandleAsync(new Request(), CancellationToken.None);
+        Assert.Equal("Hello World!", ret.Message);
+    }
+
 }
 
-file class WhatDecorator([ServiceKey] string key) : IRequestDecorator<Request, Response>
+file class RequestHandler : IHandler<Request, Response>
 {
-    public async Task<Response> DecorateAsync(Request request, RequestHandlerDelegate<Response> next, CancellationToken cancellationToken)
+    public Task<Response> HandleAsync(Request request, CancellationToken cancellationToken) => Task.FromResult(new Response
+    {
+        Message = "Hello World!",
+    });
+}
+
+file class WhatDecorator([ServiceKey] string key) : IDecorator<Request, Response>
+{
+    public async Task<Response> DecorateAsync(Request request, Func<Task<Response>> next, CancellationToken cancellationToken)
     {
         var response = await next();
 
         return new Response
         {
-            Message = "What"
+            Message = "What",
         };
     }
+
+    
 }
 
-file class KeyDecorator([ServiceKey] string key) : IRequestDecorator<Request, Response>
+file class KeyDecorator([ServiceKey] string key) : IDecorator<Request, Response>
 {
-    public async Task<Response> DecorateAsync(Request request, RequestHandlerDelegate<Response> next, CancellationToken cancellationToken)
+    public async Task<Response> DecorateAsync(Request request, Func<Task<Response>> next, CancellationToken cancellationToken)
     {
         var response = await next();
         return new Response
         {
-            Message = key
+            Message = key,
         };
     }
 }
