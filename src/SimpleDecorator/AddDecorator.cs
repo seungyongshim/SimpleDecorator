@@ -40,7 +40,7 @@ file class RequestHandlerWrapper<TRequest, TResponse>
     IHandler<TRequest, TResponse> handler
 ) : IHandler<TRequest, TResponse>
 {
-    public Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken)
+    public ValueTask<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken)
     {
         var decorators = sp.GetKeyedServices<IDecorator<TRequest, TResponse>>(key) ?? [];
         var decorated = decorators.Aggregate

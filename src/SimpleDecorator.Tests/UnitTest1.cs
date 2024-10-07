@@ -66,7 +66,7 @@ public class UnitTest1
 
 file class RequestHandler : IHandler<Request, Response>
 {
-    public Task<Response> HandleAsync(Request request, CancellationToken cancellationToken) => Task.FromResult(new Response
+    public ValueTask<Response> HandleAsync(Request request, CancellationToken cancellationToken) => new(new Response
     {
         Message = "Hello World!",
     });
@@ -74,7 +74,7 @@ file class RequestHandler : IHandler<Request, Response>
 
 file class WhatDecorator([ServiceKey] string key) : IDecorator<Request, Response>
 {
-    public async Task<Response> DecorateAsync(Request request, Func<Task<Response>> next, CancellationToken cancellationToken)
+    public async ValueTask<Response> DecorateAsync(Request request, Func<ValueTask<Response>> next, CancellationToken cancellationToken)
     {
         var response = await next();
 
@@ -89,7 +89,7 @@ file class WhatDecorator([ServiceKey] string key) : IDecorator<Request, Response
 
 file class KeyDecorator([ServiceKey] string key) : IDecorator<Request, Response>
 {
-    public async Task<Response> DecorateAsync(Request request, Func<Task<Response>> next, CancellationToken cancellationToken)
+    public async ValueTask<Response> DecorateAsync(Request request, Func<ValueTask<Response>> next, CancellationToken cancellationToken)
     {
         var response = await next();
         return new Response

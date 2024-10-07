@@ -2,7 +2,7 @@ namespace SimpleDecorator.Abstractions;
 
 public interface IHandler<in TRequest, TResponse> 
 {
-    Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken);
+    ValueTask<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken);
 }
 
 
